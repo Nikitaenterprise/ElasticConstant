@@ -17,7 +17,7 @@ int main()
 	X = new double[static_cast <size_t> (pow(size, 3))];
 	Y = new double[static_cast <size_t> (pow(size, 3))];
 	Z = new double[static_cast <size_t> (pow(size, 3))];
-	std::cout << static_cast <size_t> (pow(size, 3)) << " " << sizeof(X) << std::endl;
+	//std::cout << static_cast <size_t> (pow(size, 3)) << " " << sizeof(X) << std::endl;
 	SettingLatticeParameter(X, Y, Z, size);
 	PrintingMassive(X, Y, Z);
 	system("pause");
