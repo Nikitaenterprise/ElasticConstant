@@ -11,6 +11,7 @@
 #include <tchar.h>
 #include <cmath>
 #include <iostream>
+#include <vector>
 
 
 

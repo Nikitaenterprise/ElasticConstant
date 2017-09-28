@@ -4,70 +4,93 @@
 #include "stdafx.h"
 
 void CreatingCrystall(double *X, double *Y, double *Z, size_t size, double latticeParameter);
+void CreatingVacancy(double *X, double *Y, double *Z, size_t size);
 double F(double r);
-double E(double *X, double *Y, double *Z, int e);
-double Energy(double *X, double *Y, double *Z);
+double E(double *X, double *Y, double *Z, size_t size, int e);
+double Energy(double *X, double *Y, double *Z, size_t size);
 void SettingLatticeParameter(double *X, double *Y, double *Z, size_t size);
-void PrintingMassive(double *X, double *Y, double *Z);
+void PrintingMassive(double *X, double *Y, double *Z, size_t size);
 
 int main()
 {
-	double *X, *Y, *Z;
-	size_t size = 10;
-	X = new double[static_cast <size_t> (pow(size, 3))];
-	Y = new double[static_cast <size_t> (pow(size, 3))];
-	Z = new double[static_cast <size_t> (pow(size, 3))];
-	//std::cout << static_cast <size_t> (pow(size, 3)) << " " << sizeof(X) << std::endl;
+	size_t parameter = 10;
+	size_t size = static_cast <size_t> (pow(parameter, 3));
+	double	*X = new double[size],
+			*Y = new double[size],
+			*Z = new double[size];
+
+	//std::vector <double> arr1;
+	//std::vector <double*> arr2;
+
+	//std::vector <std::vector<double>> arr3;
+	//arr3.push_back(std::vector <double>());
+	//arr3[arr3.size() - 1].push_back(100);
+
+
 	SettingLatticeParameter(X, Y, Z, size);
-	PrintingMassive(X, Y, Z);
+
+	double energyWithoutDefect = Energy(X, Y, Z, size);
+	CreatingVacancy(X, Y, Z, size);
+	double energyWithDefect = Energy(X, Y, Z, size);
+
+	std::cout << energyWithoutDefect << "\t" << energyWithDefect << std::endl;
 	system("pause");
     return 0;
 }
 
 void CreatingCrystall(double *X, double *Y, double *Z, size_t size, double latticeParameter)
 {
-	for (unsigned int i = 0; i < size; i++)
+	int index = 0;
+	for (unsigned int i = 0; i < (pow(size, 1.0 / 3.0)); i++)
 	{
-		for (unsigned int j = 0; j < size; j++)
+		for (unsigned int j = 0; j < (pow(size, 1.0 / 3.0)); j++)
 		{
-			for (unsigned int k = 0; k < size; k++)
+			for (unsigned int k = 0; k < (pow(size, 1.0 / 3.0)); k++)
 			{
-				X[i + j + k] = latticeParameter*i;
-				Y[i + j + k] = latticeParameter*j;
-				Z[i + j + k] = latticeParameter*k;
+				X[index] = latticeParameter*i;
+				Y[index] = latticeParameter*j;
+				Z[index] = latticeParameter*k;
+				index += 1;
 			}
 		}
 	}
-	PrintingMassive(X, Y, Z);
 }
 
 void SettingLatticeParameter(double *X, double *Y, double *Z, size_t size)
 {
 	double a0 = 2.845, h = a0 / 20;
 	double latticeParameter = a0;
-	int Nc = static_cast <int> (pow(size,3) / 2 + pow(size,2) / 2 + size / 2);
+	int Nc = static_cast <int> (pow(size, 1.0 / 3.0) / 2 + pow(size, 2.0 / 3.0) / 2 + size / 2);
 	CreatingCrystall(X, Y, Z, size, latticeParameter);
-	double U0 = E(X, Y, Z, Nc);
+	double U0 = E(X, Y, Z, size, Nc);
 	for (int i = 0; i < 1000; i++)
 	{
 		latticeParameter += h;
 		CreatingCrystall(X, Y, Z, size, latticeParameter);
-		if (E(X, Y, Z, Nc) == U0) break;
-		if (E(X, Y, Z, Nc) >= U0)
+		if (E(X, Y, Z, size, Nc) == U0) break;
+		if (E(X, Y, Z, size, Nc) >= U0)
 		{
 			latticeParameter -= 2 * h;
 			CreatingCrystall(X, Y, Z, size, latticeParameter);
-			U0 = E(X, Y, Z, Nc);
+			U0 = E(X, Y, Z, size, Nc);
 			h /= 8;
 		}
-		if (E(X, Y, Z, Nc) < U0) U0 = E(X, Y, Z, Nc);
+		if (E(X, Y, Z, size, Nc) < U0) U0 = E(X, Y, Z, size, Nc);
 	}
 
 }
 
-void PrintingMassive(double *X, double *Y, double *Z)
+void CreatingVacancy(double *X, double *Y, double *Z, size_t size)
 {
-	for (int i = 0; i < sizeof(X); i++) std::cout << "i = " << i << "	X = " << X[i] << std::endl;	
+	int Nc = static_cast <int> (pow(size, 1.0 / 3.0) / 2 + pow(size, 2.0 / 3.0) / 2 + size / 2);
+	X[Nc] = 1000000;
+	Y[Nc] = 1000000;
+	Z[Nc] = 1000000;
+}
+
+void PrintingMassive(double *X, double *Y, double *Z, size_t size)
+{
+	for (unsigned int i = 0; i < size; i++) std::cout << "i = " << i << "	X = " << X[i] << std::endl;
 }
 
 double F(double r)
@@ -77,14 +100,14 @@ double F(double r)
 	return F;
 }
 
-double E(double *X, double *Y, double *Z, int e)
+double E(double *X, double *Y, double *Z, size_t size, int e)
 {
 	double r = 0, E = 0;
-	for (unsigned int i = 0; i < sizeof(X); i++)
+	for (unsigned int i = 0; i < size; i++)
 	{
-		r = sqrt(pow((X[e] - X[i]), 2) + pow((Y[e] - Y[i]), 2) + pow((Z[e] - Z[i]), 2));
 		if (i != e)
 		{
+			r = sqrt(pow((X[e] - X[i]), 2) + pow((Y[e] - Y[i]), 2) + pow((Z[e] - Z[i]), 2));
 			E += F(r);
 		}
 		else
@@ -95,12 +118,12 @@ double E(double *X, double *Y, double *Z, int e)
 	return E;
 }
 
-double Energy(double *X, double *Y, double *Z)
+double Energy(double *X, double *Y, double *Z, size_t size)
 {
 	double U = 0;
-	for (unsigned int i = 0; i < sizeof(X); i++)
+	for (unsigned int i = 0; i < size; i++)
 	{
-		U += E(X, Y ,Z , i);
+		U += E(X, Y, Z, size, i);
 	}
 	U /= 2;
 	return U;
