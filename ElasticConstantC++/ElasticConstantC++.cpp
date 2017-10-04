@@ -10,6 +10,7 @@ double E(double *X, double *Y, double *Z, size_t size, int e);
 double Energy(double *X, double *Y, double *Z, size_t size);
 double SettingLatticeParameter(double *X, double *Y, double *Z, size_t size);
 void PrintingMassive(double *X, double *Y, double *Z, size_t size);
+void Relaxation(double *X, double *Y, double *Z, size_t size, double latticeParameter, int counterForRLessThan5);
 int *NearestToVacancy(double *X, double *Y, double *Z, size_t size, double Xcentral, double Ycentral, double Zcentral, double latticeParameter, size_t &sizeOfIndex);
 void MakingSphere(double *X, double *Y, double *Z, size_t &size, std::vector<double> &vacancy, double latticeParameter);
 
@@ -80,6 +81,7 @@ double SettingLatticeParameter(double *X, double *Y, double *Z, size_t size)
 		}
 		if (E(X, Y, Z, size, central) < U0) U0 = E(X, Y, Z, size, central);
 	}
+	std::cout << "Lattice Parameter = " << latticeParameter << std::endl;
 	return latticeParameter;
 }
 
@@ -149,6 +151,7 @@ void MakingSphere(double *X, double *Y, double *Z, size_t &size, std::vector<dou
 			newCounter += 1;
 		}
 	}
+	int counterForRLessThan5 = newCounter;
 	for (int i = 0; i < counter; i++)
 	{
 		double R = sqrt(pow((Xcentral - X[i]), 2) + pow((Ycentral - Y[i]), 2) + pow((Zcentral - Z[i]), 2));
@@ -159,6 +162,33 @@ void MakingSphere(double *X, double *Y, double *Z, size_t &size, std::vector<dou
 			tempZ[newCounter] = Z[i];
 			newCounter += 1;
 		}
+	}
+	int counterForRFrom5UpTo7 = newCounter;
+	std::cout << "counter = " << counter << std::endl;
+	std::cout << "#########################" << std::endl;
+	std::cout << "Now we are talking about <=5 and >=5 <=7" << std::endl;
+	std::cout << "counterForRLessThan5 = " << counterForRLessThan5 << std::endl;
+	std::cout << "counterForRFrom5UpTo7 = " << counterForRFrom5UpTo7 << std::endl;
+	for (unsigned int i = 0; i < counter; i++) std::cout << "i = " << i << "\tX = " << (X[i]-Xcentral) / latticeParameter << "\tY = " << (Y[i]-Ycentral) / latticeParameter << "\tZ = " << (Z[i]-Zcentral) / latticeParameter << std::endl;
+	std::cout << "#########################" << std::endl;
+	std::cout << "Now we are talking about >=2 <=3" << std::endl;
+	int counterForRFrom2UpTo3 = 0;
+	for (unsigned int i = 0; i < counter; i++)
+	{
+		double R = sqrt(pow((Xcentral - X[i]), 2) + pow((Ycentral - Y[i]), 2) + pow((Zcentral - Z[i]), 2));
+		if (R >= latticeParameter * 2 && R <= latticeParameter * 3)
+		{
+			std::cout << "i = " << i << "\tX = " << (X[i] - Xcentral) / latticeParameter << "\tY = " << (Y[i] - Ycentral) / latticeParameter << "\tZ = " << (Z[i] - Zcentral) / latticeParameter << std::endl;
+			counterForRFrom2UpTo3++;
+		}
+	}
+	std::cout << "counterForRFrom2UpTo3 = " << counterForRFrom2UpTo3 << std::endl;
+	std::cout << "#########################" << std::endl;
+	std::cout << "Now we are talking about <=7" << std::endl;
+	for (unsigned int i = 0; i < counter; i++)
+	{
+		double R = sqrt(pow((Xcentral - X[i]), 2) + pow((Ycentral - Y[i]), 2) + pow((Zcentral - Z[i]), 2));
+		if (R <= latticeParameter * 7) std::cout << "i = " << i << "\tX = " << (X[i] - Xcentral) / latticeParameter << "\tY = " << (Y[i] - Ycentral) / latticeParameter << "\tZ = " << (Z[i] - Zcentral) / latticeParameter << std::endl;
 	}
 	std::cout << "counters = " << counter << "\t" << newCounter << std::endl;
 	delete[] tempX, tempY, tempZ;
@@ -188,6 +218,43 @@ int *NearestToVacancy(double *X, double *Y, double *Z, size_t size, double Xcent
 	}
 	sizeOfIndex = counter;
 	return index;
+}
+
+void Relaxation(double *X, double *Y, double *Z, size_t size, double latticeParameter, int counterForRLessThan5)
+{
+	double h = 0.005 * latticeParameter;
+	for (unsigned int i = 0; i < counterForRLessThan5; i++)
+	{
+		int counter = 0;
+		for (unsigned int j = 1; j < 1000; j++)
+		{
+			double E = E(X, Y, Z, size, i);
+			X[i] += h;
+			double Ex = E(X, Y, Z, size, i);
+			double dEx = Ex - E;
+			X[i] -= h;
+			Y[i] += h;
+			double Ey = E(X, Y, Z, size, i);
+			double dEy = Ey - E;
+			Y[i] += h;
+			Z[i] -= h;
+			double Ez = E(X, Y, Z, size, i);
+			double dEz = Ez - E;
+			Z[i] += h;
+			double b = sqrt(pow(dEx, 2) + pow(dEy, 2) + pow(dEz, 2));
+			double hx = -h*dEx / b, hy = -h*dEy / b, hz = -h*dEz / b;
+			X[i] += hx;
+			Y[i] += hy;
+			Z[i] += hz;
+			double dE = E(X, Y, Z, size, i);
+			if (dE < E)
+			{
+				h /= (j * 8);
+				counter++;
+			}
+			if (counter >= 10)break;
+		}
+	}
 }
 
 double F(double r)
