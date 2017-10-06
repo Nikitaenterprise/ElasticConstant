@@ -1,48 +1,54 @@
-// ElasticConstantC++.cpp: определяет точку входа для консольного приложения.
-//
-
 #include "stdafx.h"
 
-void CreatingCrystall(double *X, double *Y, double *Z, size_t size, double latticeParameter);
-void CreatingVacancy(double *X, double *Y, double *Z, size_t size, std::vector<double> &vacancy);
-double F(double r);
-double E(double *X, double *Y, double *Z, size_t size, int e);
-double Energy(double *X, double *Y, double *Z, size_t size);
-double SettingLatticeParameter(double *X, double *Y, double *Z, size_t size);
-void PrintingMassive(double *X, double *Y, double *Z, size_t size);
-void Relaxation(double *X, double *Y, double *Z, size_t size, double latticeParameter, int counterForRLessThan5);
-int *NearestToVacancy(double *X, double *Y, double *Z, size_t size, double Xcentral, double Ycentral, double Zcentral, double latticeParameter, size_t &sizeOfIndex);
-void MakingSphere(double *X, double *Y, double *Z, size_t &size, std::vector<double> &vacancy, double latticeParameter);
+void CreatingCrystall(size_t, double);
+void CreatingVacancy(size_t, std::vector<double> &);
+double F(double );
+double E(size_t, int);
+double Energy(size_t);
+double SettingLatticeParameter(size_t);
+void PrintingMassive(size_t);
+void Relaxation(size_t, double, int);
+int *NearestToVacancy(size_t, double, double, double, double, size_t &);
+void MakingSphere(size_t &, std::vector<double> &, double, int &);
+
+double *X, *Y, *Z;
+double ***MyPrettyMassive = NULL;
 
 int main()
 {
 	size_t parameter = 14;
 	size_t size = static_cast<size_t> (pow(parameter, 3));
-	double	*X = new double[size],
-			*Y = new double[size],
-			*Z = new double[size];
+	double	*_X = new double[size],
+			*_Y = new double[size],
+			*_Z = new double[size];
+	X = _X;
+	Y = _Y;
+	Z = _Z;
 
+	MyPrettyMassive = new double**[3];
+	for (int i = 0; i <= 3; i++) MyPrettyMassive[i] = new double*[3];
+	
 	std::vector<double> vacancy;
 	vacancy.push_back(0);
 	vacancy.push_back(0);
 	vacancy.push_back(0);
 	
-	double latticeParameter = SettingLatticeParameter(X, Y, Z, size);
+	double latticeParameter = SettingLatticeParameter(size);
 
-	double energyWithoutDefect = Energy(X, Y, Z, size);
-	CreatingVacancy(X, Y, Z, size, vacancy);
-	double energyWithDefect = Energy(X, Y, Z, size);
-
+	double energyWithoutDefect = Energy(size);
+	CreatingVacancy(size, vacancy);
+	double energyWithDefect = Energy(size);
+	int counterForRLessThan5;
 	std::cout << "size = " << size << std::endl;
-	MakingSphere(X, Y, Z, size, vacancy, latticeParameter);
+	MakingSphere(size, vacancy, latticeParameter, counterForRLessThan5);
 	std::cout << "size = " << size << std::endl;
-	
+	Relaxation(size, latticeParameter, counterForRLessThan5);
 	std::cout << energyWithoutDefect << "\t" << energyWithDefect << std::endl;
 	system("pause");
     return 0;
 }
 
-void CreatingCrystall(double *X, double *Y, double *Z, size_t size, double latticeParameter)
+void CreatingCrystall(size_t size, double latticeParameter)
 {
 	int index = 0;
 	for (unsigned int i = 0; i < (pow(size, 1.0 / 3.0)); i++)
@@ -60,32 +66,32 @@ void CreatingCrystall(double *X, double *Y, double *Z, size_t size, double latti
 	}
 }
 
-double SettingLatticeParameter(double *X, double *Y, double *Z, size_t size)
+double SettingLatticeParameter(size_t size)
 {
 	double a0 = 2.845, h = a0 / 20;
 	double latticeParameter = a0;
 	int central = static_cast<int> (pow(size, 1.0 / 3.0) / 2 + pow(size, 2.0 / 3.0) / 2 + size / 2);
-	CreatingCrystall(X, Y, Z, size, latticeParameter);
-	double U0 = E(X, Y, Z, size, central);
+	CreatingCrystall(size, latticeParameter);
+	double U0 = E(size, central);
 	for (int i = 0; i < 1000; i++)
 	{
 		latticeParameter += h;
-		CreatingCrystall(X, Y, Z, size, latticeParameter);
-		if (E(X, Y, Z, size, central) == U0) break;
-		if (E(X, Y, Z, size, central) >= U0)
+		CreatingCrystall(size, latticeParameter);
+		if (E(size, central) == U0) break;
+		if (E(size, central) >= U0)
 		{
 			latticeParameter -= 2 * h;
-			CreatingCrystall(X, Y, Z, size, latticeParameter);
-			U0 = E(X, Y, Z, size, central);
+			CreatingCrystall(size, latticeParameter);
+			U0 = E(size, central);
 			h /= 8;
 		}
-		if (E(X, Y, Z, size, central) < U0) U0 = E(X, Y, Z, size, central);
+		if (E(size, central) < U0) U0 = E(size, central);
 	}
 	std::cout << "Lattice Parameter = " << latticeParameter << std::endl;
 	return latticeParameter;
 }
 
-void CreatingVacancy(double *X, double *Y, double *Z, size_t size, std::vector<double> &vacancy)
+void CreatingVacancy(size_t size, std::vector<double> &vacancy)
 {
 	int central = static_cast <int> (pow(size, 1.0 / 3.0) / 2 + pow(size, 2.0 / 3.0) / 2 + size / 2);
 	vacancy[0] = X[central];
@@ -96,12 +102,12 @@ void CreatingVacancy(double *X, double *Y, double *Z, size_t size, std::vector<d
 	Z[central] = 1000000;
 }
 
-void PrintingMassive(double *X, double *Y, double *Z, size_t size)
+void PrintingMassive(size_t size)
 {
 	for (unsigned int i = 0; i < size; i++)	std::cout << "i = " << i << "\tX = " << X[i] << "\tY = " << Y[i] << "\tZ = " << Z[i] << std::endl;
 }
 
-void MakingSphere(double *X, double *Y, double *Z, size_t &size, std::vector<double> &vacancy, double latticeParameter)
+void MakingSphere(size_t &size, std::vector<double> &vacancy, double latticeParameter, int &_counterForRLessThan5)
 {
 	double	*tempX = new double[size],
 			*tempY = new double[size],
@@ -139,7 +145,6 @@ void MakingSphere(double *X, double *Y, double *Z, size_t &size, std::vector<dou
 	tempZ = new double[counter];
 
 	int newCounter = 0;
-
 	for (int i = 0; i < counter; i++)
 	{
 		double R = sqrt(pow((Xcentral - X[i]), 2) + pow((Ycentral - Y[i]), 2) + pow((Zcentral - Z[i]), 2));
@@ -148,32 +153,39 @@ void MakingSphere(double *X, double *Y, double *Z, size_t &size, std::vector<dou
 			tempX[newCounter] = X[i];
 			tempY[newCounter] = Y[i];
 			tempZ[newCounter] = Z[i];
-			newCounter += 1;
+			newCounter++;
 		}
 	}
 	int counterForRLessThan5 = newCounter;
+	_counterForRLessThan5 = counterForRLessThan5;
+	
+
+	newCounter = 0;
 	for (int i = 0; i < counter; i++)
 	{
 		double R = sqrt(pow((Xcentral - X[i]), 2) + pow((Ycentral - Y[i]), 2) + pow((Zcentral - Z[i]), 2));
-		if (R <= latticeParameter * pow(size, 1.0 / 3.0) / 2 + 0.001 && R > latticeParameter * 5)
+		if (R > latticeParameter * 5 && R <= latticeParameter * pow(size, 1.0 / 3.0) / 2 + 0.001)
 		{
 			tempX[newCounter] = X[i];
 			tempY[newCounter] = Y[i];
 			tempZ[newCounter] = Z[i];
-			newCounter += 1;
+			newCounter++;
 		}
 	}
 	int counterForRFrom5UpTo7 = newCounter;
+
 	std::cout << "counter = " << counter << std::endl;
 	std::cout << "#########################" << std::endl;
 	std::cout << "Now we are talking about <=5 and >=5 <=7" << std::endl;
 	std::cout << "counterForRLessThan5 = " << counterForRLessThan5 << std::endl;
 	std::cout << "counterForRFrom5UpTo7 = " << counterForRFrom5UpTo7 << std::endl;
-	for (unsigned int i = 0; i < counter; i++) std::cout << "i = " << i << "\tX = " << (X[i]-Xcentral) / latticeParameter << "\tY = " << (Y[i]-Ycentral) / latticeParameter << "\tZ = " << (Z[i]-Zcentral) / latticeParameter << std::endl;
+	for (int i = 0; i < counter; i++) std::cout << "i = " << i << "\tX = " << (X[i]-Xcentral) / latticeParameter << "\tY = " << (Y[i]-Ycentral) / latticeParameter << "\tZ = " << (Z[i]-Zcentral) / latticeParameter << std::endl;
 	std::cout << "#########################" << std::endl;
 	std::cout << "Now we are talking about >=2 <=3" << std::endl;
+
+
 	int counterForRFrom2UpTo3 = 0;
-	for (unsigned int i = 0; i < counter; i++)
+	for (int i = 0; i < counter; i++)
 	{
 		double R = sqrt(pow((Xcentral - X[i]), 2) + pow((Ycentral - Y[i]), 2) + pow((Zcentral - Z[i]), 2));
 		if (R >= latticeParameter * 2 && R <= latticeParameter * 3)
@@ -182,22 +194,77 @@ void MakingSphere(double *X, double *Y, double *Z, size_t &size, std::vector<dou
 			counterForRFrom2UpTo3++;
 		}
 	}
+
 	std::cout << "counterForRFrom2UpTo3 = " << counterForRFrom2UpTo3 << std::endl;
 	std::cout << "#########################" << std::endl;
 	std::cout << "Now we are talking about <=7" << std::endl;
-	for (unsigned int i = 0; i < counter; i++)
+	int counterForRLessThan7 = 0;
+	for (int i = 0; i < counter; i++)
 	{
 		double R = sqrt(pow((Xcentral - X[i]), 2) + pow((Ycentral - Y[i]), 2) + pow((Zcentral - Z[i]), 2));
-		if (R <= latticeParameter * 7) std::cout << "i = " << i << "\tX = " << (X[i] - Xcentral) / latticeParameter << "\tY = " << (Y[i] - Ycentral) / latticeParameter << "\tZ = " << (Z[i] - Zcentral) / latticeParameter << std::endl;
+		if (R <= latticeParameter * 7)
+		{
+			std::cout << "i = " << i << "\tX = " << (X[i] - Xcentral) / latticeParameter << "\tY = " << (Y[i] - Ycentral) / latticeParameter << "\tZ = " << (Z[i] - Zcentral) / latticeParameter << std::endl;
+			counterForRLessThan7++;
+		}
 	}
-	std::cout << "counters = " << counter << "\t" << newCounter << std::endl;
+
+	for (int i = 0; i <= 3; i++) MyPrettyMassive[0][i] = new double[counterForRLessThan5];
+	for (int i = 0; i <= 3; i++) MyPrettyMassive[1][i] = new double[counterForRLessThan7];
+	for (int i = 0; i <= 3; i++) MyPrettyMassive[2][i] = new double[counterForRFrom2UpTo3];
+	for (int i = 0; i <= 3; i++) MyPrettyMassive[3][i] = new double[counterForRFrom5UpTo7];
+
+	int newCounter0 = 0, newCounter1 = 0, newCounter2 = 0, newCounter3 = 0;
+	for (int i = 0; i < counter; i++)
+	{
+		double R = sqrt(pow((Xcentral - X[i]), 2) + pow((Ycentral - Y[i]), 2) + pow((Zcentral - Z[i]), 2));
+		if (R <= latticeParameter * 5)
+		{
+			MyPrettyMassive[0][0][newCounter1] = i;
+			MyPrettyMassive[0][1][newCounter1] = X[i];
+			MyPrettyMassive[0][2][newCounter1] = Y[i];
+			MyPrettyMassive[0][0][newCounter1] = Z[i];
+			newCounter0++;
+		}
+		if (R <= latticeParameter * 7)
+		{
+			MyPrettyMassive[1][0][newCounter1] = i;
+			MyPrettyMassive[1][1][newCounter1] = X[i];
+			MyPrettyMassive[1][2][newCounter1] = Y[i];
+			MyPrettyMassive[1][0][newCounter1] = Z[i];
+			newCounter1++;
+		}
+		if (R >= latticeParameter * 2 && R <= latticeParameter * 3)
+		{
+			MyPrettyMassive[2][0][newCounter1] = i;
+			MyPrettyMassive[2][1][newCounter1] = X[i];
+			MyPrettyMassive[2][2][newCounter1] = Y[i];
+			MyPrettyMassive[2][0][newCounter1] = Z[i];
+			newCounter2++;
+		}
+		if (R > latticeParameter * 5 && R <= latticeParameter * pow(size, 1.0 / 3.0) / 2 + 0.001)
+		{
+			MyPrettyMassive[3][0][newCounter1] = i;
+			MyPrettyMassive[3][1][newCounter1] = X[i];
+			MyPrettyMassive[3][2][newCounter1] = Y[i];
+			MyPrettyMassive[3][0][newCounter1] = Z[i];
+			newCounter3++;
+		}
+	}
+	
+	for (int i = 0; i < counter; i++)
+	{
+		X[i] = tempX[i];
+		Y[i] = tempY[i];
+		Z[i] = tempZ[i];
+	}
 	delete[] tempX, tempY, tempZ;
 	size = newCounter;
 	size_t sizeOfIndex;
-	int *index = NearestToVacancy(X, Y, Z, size, Xcentral, Ycentral, Zcentral, latticeParameter, sizeOfIndex);
+	int *index = NearestToVacancy(size, Xcentral, Ycentral, Zcentral, latticeParameter, sizeOfIndex);
 }
 
-int *NearestToVacancy(double *X, double *Y, double *Z, size_t size, double Xcentral, double Ycentral, double Zcentral, double latticeParameter, size_t &sizeOfIndex)
+int *NearestToVacancy(size_t size, double Xcentral, double Ycentral, double Zcentral, double latticeParameter, size_t &sizeOfIndex)
 {
 	int counter = 0;
 	for (unsigned int i = 0; i < size; i++)
@@ -220,39 +287,40 @@ int *NearestToVacancy(double *X, double *Y, double *Z, size_t size, double Xcent
 	return index;
 }
 
-void Relaxation(double *X, double *Y, double *Z, size_t size, double latticeParameter, int counterForRLessThan5)
+void Relaxation(size_t size, double latticeParameter, int counterForRLessThan5)
 {
 	double h = 0.005 * latticeParameter;
-	for (unsigned int i = 0; i < counterForRLessThan5; i++)
+	for (int i = 0; i < counterForRLessThan5; i++)
 	{
+		std::cout << i << std::endl;
 		int counter = 0;
 		for (unsigned int j = 1; j < 1000; j++)
 		{
-			double E = E(X, Y, Z, size, i);
+			double Estart = E(size, i);
 			X[i] += h;
-			double Ex = E(X, Y, Z, size, i);
-			double dEx = Ex - E;
+			double Ex = E(size, i);
+			double dEx = Ex - Estart;
 			X[i] -= h;
 			Y[i] += h;
-			double Ey = E(X, Y, Z, size, i);
-			double dEy = Ey - E;
+			double Ey = E(size, i);
+			double dEy = Ey - Estart;
 			Y[i] += h;
 			Z[i] -= h;
-			double Ez = E(X, Y, Z, size, i);
-			double dEz = Ez - E;
+			double Ez = E(size, i);
+			double dEz = Ez - Estart;
 			Z[i] += h;
 			double b = sqrt(pow(dEx, 2) + pow(dEy, 2) + pow(dEz, 2));
 			double hx = -h*dEx / b, hy = -h*dEy / b, hz = -h*dEz / b;
 			X[i] += hx;
 			Y[i] += hy;
 			Z[i] += hz;
-			double dE = E(X, Y, Z, size, i);
-			if (dE < E)
+			double dE = E(size, i);
+			if (dE < Estart)
 			{
 				h /= (j * 8);
 				counter++;
 			}
-			if (counter >= 10)break;
+			if (counter >= 1) break;
 		}
 	}
 }
@@ -264,7 +332,7 @@ double F(double r)
 	return F;
 }
 
-double E(double *X, double *Y, double *Z, size_t size, int e)
+double E(size_t size, int e)
 {
 	double r = 0, E = 0;
 	for (unsigned int i = 0; i < size; i++)
@@ -278,10 +346,10 @@ double E(double *X, double *Y, double *Z, size_t size, int e)
 	return E;
 }
 
-double Energy(double *X, double *Y, double *Z, size_t size)
+double Energy(size_t size)
 {
 	double U = 0;
-	for (unsigned int i = 0; i < size; i++) U += E(X, Y, Z, size, i);
+	for (unsigned int i = 0; i < size; i++) U += E(size, i);
 	U /= 2;
 	return U;
 }
