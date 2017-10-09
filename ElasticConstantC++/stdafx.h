@@ -12,7 +12,7 @@
 #include <cmath>
 #include <iostream>
 #include <vector>
-
+#include <fstream>
 
 
 // TODO: Установите здесь ссылки на дополнительные заголовки, требующиеся для программы
