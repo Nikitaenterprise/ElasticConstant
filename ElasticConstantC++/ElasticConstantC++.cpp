@@ -28,6 +28,7 @@ double C = 0;
 
 int main()
 {
+	int startClock = clock();
 	size_t parameter = 14;
 	size_t size = static_cast<size_t> (pow(parameter, 3));
 	double	*_X = new double[size],
@@ -52,22 +53,19 @@ int main()
 	CreatingVacancy(size, vacancy);
 	double energyWithDefect = Energy(size);
 	MakingSphere(size, vacancy, counterForRLessThan5);
-	/*for (int i = 0; i < counterForRFrom2UpTo3; i++)
-	{
-		std::cout << "1: i = " << MyPrettyMassive[2][0][i] << " X = " << MyPrettyMassive[2][1][i] << " Y = " << MyPrettyMassive[2][2][i] << " Z = " << MyPrettyMassive[2][3][i] << std::endl;
-		std::cout << "2: i = " << BeforeRelax[0][i] << " X = " << BeforeRelax[1][i] << " Y = " << BeforeRelax[2][i] << " Z = " << BeforeRelax[3][i] << std::endl;
-	}*/
 	std::ofstream out("out.txt");
-	for (int i = 1; i < 10; i++)
+	for (int i = 1; i < 15; i++)
 	{
 		Relaxation();
 		C = ParameterC();
 		RelaxationOuterSphere(vacancy);
-		std::cout << i << std::endl;
+		std::cout << "\t" << i << std::endl;
 		out << i << "\t" << C << "\n";
 	}
 	out.close();
 	std::cout << energyWithoutDefect << "\t" << energyWithDefect << std::endl;
+	int endClock = clock();
+	std::cout << "Time of calculation = " << (endClock - startClock)/CLOCKS_PER_SEC << std::endl;
 	system("pause");
     return 0;
 }
@@ -270,8 +268,15 @@ void MakingSphere(size_t &size, std::vector<double> &vacancy, int &_counterForRL
 
 void Relaxation()
 {
+	double *tempX = new double[counterForRFrom2UpTo3], *tempY = new double[counterForRFrom2UpTo3], *tempZ = new double[counterForRFrom2UpTo3];
+	for (int i = 0; i < counterForRFrom2UpTo3; i++)
+	{
+		tempX[i] = MyPrettyMassive[2][1][i];
+		tempY[i] = MyPrettyMassive[2][2][i];
+		tempZ[i] = MyPrettyMassive[2][3][i];
+	}
 	//std::cout << "I`m relaxation" << std::endl;
-	for (int j = 0; j < 10; j++)
+	for (int j = 0; j < 20; j++)
 	{
 		std::cout << j << std::endl;
 		//std::cout << MyPrettyMassive[0][1][20] << "\t" << MyPrettyMassive[0][2][20] << "\t" << MyPrettyMassive[0][3][20] << std::endl;
@@ -279,7 +284,7 @@ void Relaxation()
 		{
 			double h = latticeParameter / 100;
 			int counter = 1;
-			while (counter < 5)
+			while (counter < 10)
 			{
 				double Estart = E(counterForRLessThan5, i, MyPrettyMassive[0]);
 				//std::cout << "Estart = " << Estart << std::endl;
@@ -304,7 +309,7 @@ void Relaxation()
 				double dE = E(counterForRLessThan5, i, MyPrettyMassive[0]);
 				if (dE >= Estart)
 				{
-					h /= (counter * 4);
+					h /= (counter * 8);
 					MyPrettyMassive[0][1][i] -= hx;
 					MyPrettyMassive[0][2][i] -= hy;
 					MyPrettyMassive[0][3][i] -= hz;
@@ -314,6 +319,10 @@ void Relaxation()
 		}
 	}
 	CopyData(MyPrettyMassive[2], counterForRFrom2UpTo3, MyPrettyMassive[0], counterForRLessThan5);
+	for (int i = 0; i < counterForRFrom2UpTo3; i++)
+	{
+		std::cout << "i = " << MyPrettyMassive[2][0][i] << " dX = " << MyPrettyMassive[2][1][i] - tempX[i] << " dY = " << MyPrettyMassive[2][2][i] - tempY[i] << " dZ = " << MyPrettyMassive[2][3][i] - tempZ[i] << std::endl;
+	}
 }
 
 double ParameterC()
@@ -369,7 +378,7 @@ void RelaxationOuterSphere(const std::vector<double> &vacancy)
 
 double F(double r)
 {
-	double F, E = 0.5, R0 = 2.0, l = 1.5;
+	double F, E = 0.4174, R0 = 2.845, l = 1.3885;
 	F = E*(exp(-2 * l*(r - R0)) - 2 * exp(-l*(r - R0)));
 	return F;
 }

@@ -13,6 +13,7 @@
 #include <iostream>
 #include <vector>
 #include <fstream>
+#include <ctime>
 
 
 // TODO: Установите здесь ссылки на дополнительные заголовки, требующиеся для программы
