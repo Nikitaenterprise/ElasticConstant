@@ -19,7 +19,7 @@ void CopyData(double **, int, double **, int);
 double *X = NULL, *Y = NULL, *Z = NULL;
 double ***MyPrettyMassive = NULL;
 double **BeforeRelax = NULL;
-size_t parameter = 20;
+size_t parameter = 14;
 long double latticeParameter;
 int counterForRFrom2UpTo3, 
 	counterForRFrom5UpTo7, 
@@ -50,12 +50,6 @@ int main()
 	
 	latticeParameter = SettingLatticeParameter(size);
 
-	std::ofstream out11("nonrel.txt");
-	for (int i = 0; i < size; i++)
-	{
-		out11 << X[i] << "\t" << Y[i] << "\t" << Z[i] << std::endl;
-	}
-	out11.close();
 	double energyWithoutDefect = Energy(size);
 	CreatingVacancy(size, vacancy);
 	double energyWithDefect = Energy(size);
@@ -125,12 +119,14 @@ int main()
 	VfE /= -6;
 
 	double Vf = VfE + dVf;
+	double Vf1 = Vf / (4 / 3 * 3.14*pow(parameter / 2, 3));
 
 	std::cout << "VfE1 = " << VfE1 << " VfE2 = " << VfE2 << std::endl;
 	std::cout << "VfE2 - VfE1 = " << VfE2 - VfE1 << std::endl;
 	std::cout << "VfE = " << VfE << std::endl;
 	std::cout << "dVf = " << dVf << std::endl;
 	std::cout << "Vf = " << Vf << std::endl;
+	std::cout << "Vf1 = " << Vf1 << std::endl;
 	std::cout << energyWithoutDefect << "\t" << energyWithDefect << std::endl;
 	int endClock = clock();
 	std::cout << "Time of calculation = " << (endClock - startClock)/CLOCKS_PER_SEC << std::endl;
@@ -194,11 +190,6 @@ void CreatingVacancy(size_t size, std::vector<double> &vacancy)
 	X[central] = 1000000;
 	Y[central] = 1000000;
 	Z[central] = 1000000;
-}
-
-void PrintingMassive(size_t size)
-{
-	for (unsigned int i = 0; i < size; i++)	std::cout << "i = " << i << "\tX = " << X[i] << "\tY = " << Y[i] << "\tZ = " << Z[i] << std::endl;
 }
 
 void MakingSphere(size_t &size, std::vector<double> &vacancy)
@@ -428,7 +419,7 @@ double ParameterC()
 		//std::cout << "C1 = " << C1 << std::endl;
 	}
 	C1 /= (counterForRFrom2UpTo3*counter);
-	std::cout << "C1 = " << C1 << std::endl;
+	//std::cout << "C1 = " << C1 << std::endl;
 	CopyData(MyPrettyMassive[0], counterForRLessThan5, MyPrettyMassive[2], counterForRFrom2UpTo3);
 	CopyData(MyPrettyMassive[1], counterForRLessThan7, MyPrettyMassive[0], counterForRLessThan5);
 	CopyData(MyPrettyMassive[3], counterForRFrom5UpTo7, MyPrettyMassive[1], counterForRLessThan7);
@@ -437,6 +428,7 @@ double ParameterC()
 
 void CopyData(double **MassiveTo, int sizeTo, double **MassiveFrom, int sizeFrom)
 {
+	//int counter = 0;
 	for (int i = 0; i < sizeFrom; i++)
 	{
 		for (int j = 0; j < sizeTo; j++)
@@ -446,9 +438,11 @@ void CopyData(double **MassiveTo, int sizeTo, double **MassiveFrom, int sizeFrom
 				MassiveTo[1][j] = MassiveFrom[1][i];
 				MassiveTo[2][j] = MassiveFrom[2][i];
 				MassiveTo[3][j] = MassiveFrom[3][i];
+				//counter++;
 			}
 		}
 	}
+	//std::cout << "counter = " << counter << " sizeFrom = " << sizeFrom << " sizeTo = " << sizeTo << std::endl;
 }
 
 void RelaxationOuterSphere(const std::vector<double> &vacancy)
