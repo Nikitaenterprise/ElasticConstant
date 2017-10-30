@@ -6,11 +6,13 @@ double F(double );
 double Fsharp(double );
 double E(size_t, int);
 double E(size_t, int, double **);
+double EForAt(size_t, int, double **);
 double Energy(size_t);
 double ParameterC();
 double SettingLatticeParameter(size_t);
 void PrintingMassive(size_t);
 void Relaxation();
+void Relaxation(int, double);
 void MakingSphere(size_t &, std::vector<double> &);
 void RelaxationOuterSphere(const std::vector<double> &);
 void CopyData(double **, int, double **, int);
@@ -18,15 +20,17 @@ void CopyData(double **, int, double **, int);
 
 double *X = NULL, *Y = NULL, *Z = NULL;
 double ***MyPrettyMassive = NULL;
+std::vector<std::vector<double>> vecNearestTo;
+std::vector<double> vacancy;
+double **NearestTo = NULL;
 double **BeforeRelax = NULL;
-size_t parameter = 14;
+size_t parameter = 16;
 long double latticeParameter;
 int counterForRFrom2UpTo3, 
 	counterForRFrom5UpTo7, 
 	counterForRLessThan5, 
 	counterForRLessThan7;
 double C = 0;
-//double VfE1;
 
 int main()
 {
@@ -43,7 +47,6 @@ int main()
 	MyPrettyMassive = new double**[3];
 	for (int i = 0; i < 4; i++) MyPrettyMassive[i] = new double*[3];
 	
-	std::vector<double> vacancy;
 	vacancy.push_back(0);
 	vacancy.push_back(0);
 	vacancy.push_back(0);
@@ -84,7 +87,7 @@ int main()
 		std::cout << "I`m in main alyo bliat\n";
 		out << 0 << "\t" << C << "\n";
 	}
-	for (int i = 1; i < 20; i++)
+	for (int i = 1; i < 10; i++)
 	{
 		RelaxationOuterSphere(vacancy);
 		Relaxation();
@@ -128,6 +131,35 @@ int main()
 	std::cout << "Vf = " << Vf << std::endl;
 	std::cout << "Vf1 = " << Vf1 << std::endl;
 	std::cout << energyWithoutDefect << "\t" << energyWithDefect << std::endl;
+	
+	int index;
+	double tempR = 100;
+	for (int i = 0; i < counterForRLessThan5; i++)
+	{
+		double R = sqrt(pow(vacancy[0] - MyPrettyMassive[0][1][i], 2) + pow(vacancy[1] - MyPrettyMassive[0][2][i], 2) + pow(vacancy[2] - MyPrettyMassive[0][3][i], 2));
+		if (R < tempR && R != 0)
+		{
+			tempR = R;
+			index = i;
+			std::cout << "tempR = " << tempR << " index = " << index << std::endl;
+		}
+	}
+	std::cout << "index is = " << index << std::endl;
+	std::ofstream out2("traj.txt");
+	double dx = abs(vacancy[0] - MyPrettyMassive[0][1][index]) / 30;
+	dx = latticeParameter / 30;
+	if (vacancy[0] > MyPrettyMassive[0][1][index]) dx *= 1;
+	else if (vacancy[0] < MyPrettyMassive[0][1][index]) dx*=-1;
+	std::cout << "vac = " << vacancy[0] << " x = " << MyPrettyMassive[0][1][index] << std::endl;
+	for (int i = 0; i < 60; i++)
+	{
+		std::cout << i << std::endl;
+		Relaxation(index, dx);
+		double En = E(counterForRLessThan5, index, MyPrettyMassive[0]);
+		out2 << En << "\t" << MyPrettyMassive[0][1][index] << "\t" << MyPrettyMassive[0][2][index] << "\t" << MyPrettyMassive[0][3][index] << std::endl;
+	}
+	out2.close();
+	std::cout << "\a" << std::endl;
 	int endClock = clock();
 	std::cout << "Time of calculation = " << (endClock - startClock)/CLOCKS_PER_SEC << std::endl;
 	//std::cout << "\a" << std::endl;
@@ -137,17 +169,21 @@ int main()
 
 void CreatingCrystall(double latticeParameter)
 {
-	int index = 0;
+	int counter = 0;
 	for (unsigned int i = 0; i < parameter; i++)
 	{
 		for (unsigned int j = 0; j < parameter; j++)
 		{
 			for (unsigned int k = 0; k < parameter; k++)
 			{
-				X[index] = latticeParameter*i;
-				Y[index] = latticeParameter*j;
-				Z[index] = latticeParameter*k;
-				index += 1;
+				X[counter] = latticeParameter*i;
+				Y[counter] = latticeParameter*j;
+				Z[counter] = latticeParameter*k;
+				counter ++;
+				/*X[counter] = latticeParameter*i + latticeParameter / 2;
+				Y[counter] = latticeParameter*j + latticeParameter / 2;
+				Z[counter] = latticeParameter*k + latticeParameter / 2;
+				counter++;*/
 			}
 		}
 	}
@@ -331,6 +367,47 @@ void MakingSphere(size_t &size, std::vector<double> &vacancy)
 		}
 	}
 
+	NearestTo = new double*[counterForRLessThan5];
+	for (int i = 0; i < counterForRLessThan5; i++)
+	{
+		int counter = 0;
+		for (int j = 0; j < counterForRLessThan5; j++)
+		{
+			double R = sqrt(pow((MyPrettyMassive[0][1][i] - MyPrettyMassive[0][1][j]), 2)
+						+ pow((MyPrettyMassive[0][2][i] - MyPrettyMassive[0][2][j]), 2)
+						+ pow((MyPrettyMassive[0][3][i] - MyPrettyMassive[0][3][i]), 2));
+
+			if (R<=5) counter++;
+		}
+		vecNearestTo.push_back(std::vector<double>());
+		vecNearestTo[i].push_back(MyPrettyMassive[0][0][i]);
+		//std::cout << counter << std::endl;
+		NearestTo[i] = new double[counter];
+		counter = 0;
+		for (int j = 0; j < counterForRLessThan5; j++)
+		{
+			double R = sqrt(pow((MyPrettyMassive[0][1][i] - MyPrettyMassive[0][1][j]), 2)
+				+ pow((MyPrettyMassive[0][2][i] - MyPrettyMassive[0][2][j]), 2)
+				+ pow((MyPrettyMassive[0][3][i] - MyPrettyMassive[0][3][i]), 2));
+
+			if (R <= 5)
+			{
+				vecNearestTo[i].push_back(MyPrettyMassive[0][0][j]);
+				NearestTo[i][counter] = MyPrettyMassive[0][0][j];
+				counter++;
+			}
+		}
+	}
+
+	for (int i = 0; i < vecNearestTo.size(); i++)
+	{
+		//for (int j = 0; j < vecNearestTo[i].size(); j++)
+		//{
+			std::cout << vecNearestTo[i][0] << "\t";
+		//}
+		std::cout << std::endl;
+	}
+
 	for (int i = 0; i < counter; i++)
 	{
 		X[i] = tempX[i];
@@ -357,7 +434,7 @@ void Relaxation()
 		//std::cout << MyPrettyMassive[0][1][20] << "\t" << MyPrettyMassive[0][2][20] << "\t" << MyPrettyMassive[0][3][20] << std::endl;
 		for (int i = 0; i < counterForRLessThan5; i++)
 		{
-			double h = latticeParameter / 1000;
+			double h = latticeParameter / 100;
 			int counter = 1;
 			while (counter < 15)
 			{
@@ -384,7 +461,7 @@ void Relaxation()
 				double dE = E(counterForRLessThan5, i, MyPrettyMassive[0]);
 				if (dE >= Estart)
 				{
-					h /= (counter * 10);
+					h /= (counter * 8);
 					MyPrettyMassive[0][1][i] -= hx;
 					MyPrettyMassive[0][2][i] -= hy;
 					MyPrettyMassive[0][3][i] -= hz;
@@ -398,6 +475,93 @@ void Relaxation()
 	{
 		std::cout << "i = " << MyPrettyMassive[2][0][i] << " dX = " << MyPrettyMassive[2][1][i] - tempX[i] << " dY = " << MyPrettyMassive[2][2][i] - tempY[i] << " dZ = " << MyPrettyMassive[2][3][i] - tempZ[i] << std::endl;
 	}*/
+}
+
+void Relaxation(int a, double dx)
+{
+	/*double *tempX = new double[counterForRFrom2UpTo3], *tempY = new double[counterForRFrom2UpTo3], *tempZ = new double[counterForRFrom2UpTo3];
+	for (int i = 0; i < counterForRFrom2UpTo3; i++)
+	{
+		tempX[i] = MyPrettyMassive[2][1][i];
+		tempY[i] = MyPrettyMassive[2][2][i];
+		tempZ[i] = MyPrettyMassive[2][3][i];
+	}*/
+	MyPrettyMassive[0][1][a] += dx;
+	for (int j = 0; j < 10; j++)
+	{
+		double h = latticeParameter / 100;
+		int counter = 1;
+		while (counter < 10)
+		{
+			double Estart = E(counterForRLessThan5, a, MyPrettyMassive[0]);
+			MyPrettyMassive[0][2][a] += h;
+			double Ey = E(counterForRLessThan5, a, MyPrettyMassive[0]);
+			double dEy = Ey - Estart;
+			MyPrettyMassive[0][2][a] -= h;
+			MyPrettyMassive[0][3][a] += h;
+			double Ez = E(counterForRLessThan5, a, MyPrettyMassive[0]);
+			double dEz = Ez - Estart;
+			MyPrettyMassive[0][3][a] -= h;
+			double b = sqrt(pow(dEy, 2) + pow(dEz, 2))+0.0000001;
+			//std::cout << "Estart = " << Estart << " Ey = " << Ey << " Ez = " << Ez << std::endl;
+			//std::cout << "b = " << b << std::endl;
+			if (b == 0) break;
+			double hy = -h*dEy / b, hz = -h*dEz / b;
+			MyPrettyMassive[0][2][a] += hy;
+			MyPrettyMassive[0][3][a] += hz;
+			double dE = E(counterForRLessThan5, a, MyPrettyMassive[0]);
+			if (dE >= Estart)
+			{
+				h /= (counter * 8);
+				MyPrettyMassive[0][2][a] -= hy;
+				MyPrettyMassive[0][3][a] -= hz;
+				counter++;
+			}
+			//std::cout << "hy = " << hy << " hz = " << hz << std::endl;
+		}
+		for (int i = 0; i < counterForRLessThan5; i++)
+		{
+			if (i != a)
+			{
+				h = latticeParameter / 100;
+				counter = 1;
+				while (counter < 10)
+				{
+					double Estart = E(counterForRLessThan5, i, MyPrettyMassive[0]);
+					MyPrettyMassive[0][1][i] += h;
+					double Ex = E(counterForRLessThan5, i, MyPrettyMassive[0]);
+					double dEx = Ex - Estart;
+					MyPrettyMassive[0][1][i] -= h;
+					MyPrettyMassive[0][2][i] += h;
+					double Ey = E(counterForRLessThan5, i, MyPrettyMassive[0]);
+					double dEy = Ey - Estart;
+					MyPrettyMassive[0][2][i] -= h;
+					MyPrettyMassive[0][3][i] += h;
+					double Ez = E(counterForRLessThan5, i, MyPrettyMassive[0]);
+					double dEz = Ez - Estart;
+					MyPrettyMassive[0][3][i] -= h;
+					double b = sqrt(pow(dEx, 2) + pow(dEy, 2) + pow(dEz, 2));
+					if (b == 0) break;
+					double hx = -h*dEx / b, hy = -h*dEy / b, hz = -h*dEz / b;
+					MyPrettyMassive[0][1][i] += hx;
+					MyPrettyMassive[0][2][i] += hy;
+					MyPrettyMassive[0][3][i] += hz;
+					double dE = E(counterForRLessThan5, i, MyPrettyMassive[0]);
+					if (dE >= Estart)
+					{
+						h /= (counter * 8);
+						MyPrettyMassive[0][1][i] -= hx;
+						MyPrettyMassive[0][2][i] -= hy;
+						MyPrettyMassive[0][3][i] -= hz;
+						counter++;
+					}
+				}
+			}
+		}
+	}
+	CopyData(MyPrettyMassive[2], counterForRFrom2UpTo3, MyPrettyMassive[0], counterForRLessThan5);
+	CopyData(MyPrettyMassive[1], counterForRLessThan7, MyPrettyMassive[0], counterForRLessThan5);
+	CopyData(MyPrettyMassive[3], counterForRFrom5UpTo7, MyPrettyMassive[1], counterForRLessThan7);
 }
 
 double ParameterC()
@@ -479,13 +643,29 @@ double Fsharp(double r)
 
 double E(size_t size, int e, double **Massive)
 {
-	double r = 0, E = 0;
+	double R = 0, E = 0;
 	for (unsigned int i = 0; i < size; i++)
 	{
 		if (i != e)
 		{
-			r = sqrt(pow((Massive[1][e] - Massive[1][i]), 2) + pow((Massive[2][e] - Massive[2][i]), 2) + pow((Massive[3][e] - Massive[3][i]), 2));
-			E += F(r);
+			R = sqrt(pow((Massive[1][e] - Massive[1][i]), 2) + pow((Massive[2][e] - Massive[2][i]), 2) + pow((Massive[3][e] - Massive[3][i]), 2));
+			E += F(R);
+		}
+	}
+	return E;
+}
+
+double EForAt(size_t size, int index, double **Massive)
+{
+	double R = 0, E = 0;
+	for (unsigned int i = 0; i < size; i++)
+	{
+		if (Massive[0][i] != Massive[0][index])
+		{
+			//std::cout << "index1 = " << Massive[0][i] << " index2 = " << Massive[0][index] << std::endl;
+			R = sqrt(pow((Massive[1][index] - Massive[1][i]), 2) + pow((Massive[2][index] - Massive[2][i]), 2) + pow((Massive[3][index] - Massive[3][i]), 2));
+			E += F(R);
+			//std::cout << "R = " << R << " E = " << E << std::endl;
 		}
 	}
 	return E;
