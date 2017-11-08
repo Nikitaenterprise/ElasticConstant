@@ -8,12 +8,12 @@
 #include "targetver.h"
 
 #include <stdio.h>
-#include <tchar.h>
+//#include <tchar.h>
 #include <cmath>
 #include <iostream>
 #include <vector>
 #include <fstream>
 #include <ctime>
-
+#include <Windows.h>
 
 // TODO: Установите здесь ссылки на дополнительные заголовки, требующиеся для программы

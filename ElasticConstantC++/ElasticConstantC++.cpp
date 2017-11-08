@@ -1,17 +1,17 @@
 #include "stdafx.h"
-
-void CreatingCrystall(double);
-void CreatingVacancy(size_t, std::vector<double> &);
-double F(double );
-double Fsharp(double );
+double F(double);
+double Fsharp(double);
 double E(size_t, int);
 double E(size_t, int, double **);
-double EForAt(size_t, int, double **);
 double Energy(size_t);
 double ParameterC();
 double SettingLatticeParameter(size_t);
+void CreatingVacancy(size_t, std::vector<double> &);
+void CreatingCrystall(double);
+void Copy();
 void PrintingMassive(size_t);
 void Relaxation();
+void Rotation(double **, int);
 void Relaxation(int, double);
 void MakingSphere(size_t &, std::vector<double> &);
 void RelaxationOuterSphere(const std::vector<double> &);
@@ -24,21 +24,21 @@ std::vector<std::vector<double>> vecNearestTo;
 std::vector<double> vacancy;
 double **NearestTo = NULL;
 double **BeforeRelax = NULL;
-size_t parameter = 20;
+size_t parameter = 16;
 long double latticeParameter;
-int counterForRFrom2UpTo3, 
-	counterForRFrom5UpTo7, 
-	counterForRLessThan5, 
-	counterForRLessThan7;
+int counterForRFrom2UpTo3,
+counterForRFrom5UpTo7,
+counterForRLessThan5,
+counterForRLessThan7;
 double C = 0;
 
 int main()
 {
 	int startClock = clock();
-	size_t size = 2*static_cast<size_t> (pow(parameter, 3));
+	size_t size = 2 * static_cast<size_t> (pow(parameter, 3));
 	double	*_X = new double[size],
-			*_Y = new double[size],
-			*_Z = new double[size];
+		*_Y = new double[size],
+		*_Z = new double[size];
 	X = _X;
 	Y = _Y;
 	Z = _Z;
@@ -46,11 +46,11 @@ int main()
 	BeforeRelax = new double*[3];
 	MyPrettyMassive = new double**[3];
 	for (int i = 0; i < 4; i++) MyPrettyMassive[i] = new double*[3];
-	
+
 	vacancy.push_back(0);
 	vacancy.push_back(0);
 	vacancy.push_back(0);
-	
+
 	latticeParameter = SettingLatticeParameter(size);
 
 	double energyWithoutDefect = Energy(size);
@@ -63,60 +63,53 @@ int main()
 	{
 		for (int j = 0; j < counterForRLessThan7; j++)
 		{
-			if (i != j)
+			if (MyPrettyMassive[1][0][i] != MyPrettyMassive[1][0][j])
 			{
 				double R = sqrt(pow((MyPrettyMassive[1][1][i] - MyPrettyMassive[1][1][j]), 2) + pow((MyPrettyMassive[1][2][i] - MyPrettyMassive[1][2][j]), 2) + pow((MyPrettyMassive[1][3][i] - MyPrettyMassive[1][3][j]), 2));
 				VfE1 += R*Fsharp(R);
+				
 			}
 		}
 	}
 	VfE1 /= 2;
-	std::ofstream out0("nonrelaxed.txt");
-	for (int i = 0; i < counterForRLessThan7; i++)
-	{
-		out0 << MyPrettyMassive[1][1][i] << "\t" << MyPrettyMassive[1][2][i] << "\t" << MyPrettyMassive[1][3][i] << std::endl;
-	}
-	out0.close();
+	std::cout << VfE1 << std::endl;
 
-	std::ofstream out("Ñ.txt");
+	std::fstream outC("C.txt", std::fstream::out);
 	if (C != 0)
 	{
 		RelaxationOuterSphere(vacancy);
 		Relaxation();
 		//C = ParameterC();
-		std::cout << "I`m in main alyo bliat\n";
-		out << 0 << "\t" << C << "\n";
+		outC << 0 << "\t" << C << "\n";
 	}
 	for (int i = 1; i < 10; i++)
 	{
 		RelaxationOuterSphere(vacancy);
 		Relaxation();
-
-		int c1 = 0, c2 = 0, c3 = 0, c4 = 0, c5 = 0;
+		/*int c1 = 0, c2 = 0, c3 = 0, c4 = 0, c5 = 0;
 		for (int i = 0; i < counterForRFrom2UpTo3; i++)
 		{
-			double r = sqrt(pow((vacancy[0] - MyPrettyMassive[2][1][i]), 2) + pow((vacancy[1] - MyPrettyMassive[2][2][i]), 2) + pow((vacancy[2] - MyPrettyMassive[2][3][i]), 2));
-			if (r > 0 && r < 5) c1++;
-			else if (r > 5 && r < 6)
-			{
-				c2++;
-				std::cout << vacancy[0] - MyPrettyMassive[2][1][i] << "\t" << vacancy[1] - MyPrettyMassive[2][2][i] << "\t" << vacancy[2] - MyPrettyMassive[2][3][i] << std::endl;
-			}
-			else if (r > 6 && r < 7) c3++;
-			else if (r > 7 && r < 8) c4++;
-			else if (r > 8 && r < 9) c5++;
-			//std::cout << r << "\t" << c1 << "\t" << c2 << "\t" << c3 << "\t" << c4 << "\t" << c5 << std::endl;
+		double r = sqrt(pow((vacancy[0] - MyPrettyMassive[2][1][i]), 2) + pow((vacancy[1] - MyPrettyMassive[2][2][i]), 2) + pow((vacancy[2] - MyPrettyMassive[2][3][i]), 2));
+		if (r > 0 && r < 5) c1++;
+		else if (r > 5 && r < 6)
+		{
+		c2++;
+		std::cout << vacancy[0] - MyPrettyMassive[2][1][i] << "\t" << vacancy[1] - MyPrettyMassive[2][2][i] << "\t" << vacancy[2] - MyPrettyMassive[2][3][i] << std::endl;
 		}
-
+		else if (r > 6 && r < 7) c3++;
+		else if (r > 7 && r < 8) c4++;
+		else if (r > 8 && r < 9) c5++;
+		std::cout << r << "\t" << c1 << "\t" << c2 << "\t" << c3 << "\t" << c4 << "\t" << c5 << std::endl;
+		}*/
 		C = ParameterC();
-		std::cout << "\t" << i << std::endl;
-		out << i << "\t" << C << "\n";
+		std::cout << "\tC = " << C << "\t" << i << std::endl;
+		outC << i << "\t" << C << "\n";
 	}
-	out.close();
+	outC.close();
 
 	double dVf = 4 * 3.14*C;
 	double VfE2 = 0;
-	std::ofstream out1("relaxed.txt");
+	std::fstream out1("relaxed.txt", std::fstream::out);
 	for (int i = 0; i < counterForRLessThan5; i++)
 	{
 		out1 << MyPrettyMassive[0][1][i] << "\t" << MyPrettyMassive[0][2][i] << "\t" << MyPrettyMassive[0][3][i] << std::endl;
@@ -126,7 +119,7 @@ int main()
 	{
 		for (int j = 0; j < counterForRLessThan7; j++)
 		{
-			if (i != j)
+			if (MyPrettyMassive[1][0][i] != MyPrettyMassive[1][0][j])
 			{
 				double R = sqrt(pow((MyPrettyMassive[1][1][i] - MyPrettyMassive[1][1][j]), 2) + pow((MyPrettyMassive[1][2][i] - MyPrettyMassive[1][2][j]), 2) + pow((MyPrettyMassive[1][3][i] - MyPrettyMassive[1][3][j]), 2));
 				VfE2 += R*Fsharp(R);
@@ -141,7 +134,7 @@ int main()
 	double Vf = VfE + dVf;
 	double Vf1 = Vf / (4 / 3 * 3.14*pow(parameter / 2, 3));
 
-	std::ofstream outdata("data.txt");
+	std::fstream outdata("data.txt", std::fstream::out);
 	std::cout << "VfE1 = " << VfE1 << " VfE2 = " << VfE2 << std::endl;
 	std::cout << "VfE2 - VfE1 = " << VfE2 - VfE1 << std::endl;
 	std::cout << "VfE = " << VfE << std::endl;
@@ -157,11 +150,16 @@ int main()
 	outdata << "Vf1 = " << Vf1 << std::endl;
 	outdata.close();
 
+	Rotation(MyPrettyMassive[0], counterForRLessThan5);
+	Rotation(MyPrettyMassive[1], counterForRLessThan7);
+	Rotation(MyPrettyMassive[2], counterForRFrom2UpTo3);
+	Rotation(MyPrettyMassive[3], counterForRFrom5UpTo7);
+
 	int index;
 	double tempR = 100;
 	for (int i = 0; i < counterForRLessThan5; i++)
 	{
-		double R = sqrt(pow(vacancy[0] - MyPrettyMassive[0][1][i], 2) + pow(vacancy[1] - MyPrettyMassive[0][2][i], 2) + pow(vacancy[2] - MyPrettyMassive[0][3][i], 2));
+		double R = sqrt(pow(vacancy[0] - MyPrettyMassive[2][1][i], 2) + pow(vacancy[1] - MyPrettyMassive[2][2][i], 2) + pow(vacancy[2] - MyPrettyMassive[2][3][i], 2));
 		if (R < tempR && R != 0)
 		{
 			tempR = R;
@@ -170,26 +168,26 @@ int main()
 		}
 	}
 	std::cout << "index is = " << index << std::endl;
-	std::ofstream out2("traj.txt");
+	std::fstream out2("traj.txt", std::fstream::out);
 	double dx1 = abs(vacancy[0] - MyPrettyMassive[0][1][index]);
 	double dx = latticeParameter / 60;
 	if (vacancy[0] > MyPrettyMassive[0][1][index]) dx *= 1;
-	else if (vacancy[0] < MyPrettyMassive[0][1][index]) dx*=-1;
+	else if (vacancy[0] < MyPrettyMassive[0][1][index]) dx *= -1;
 	std::cout << "vac = " << vacancy[0] << " x = " << MyPrettyMassive[0][1][index] << std::endl;
 	for (int i = 0; i < 60; i++)
 	{
 		std::cout << i << std::endl;
 		Relaxation(index, dx);
 		double En = E(counterForRLessThan5, index, MyPrettyMassive[0]);
-		out2 << En << "\t" << MyPrettyMassive[0][1][index] << "\t" << MyPrettyMassive[0][2][index] << "\t" << MyPrettyMassive[0][3][index] << std::endl;
+		out2 << En << "\t\t" << MyPrettyMassive[0][1][index] << "\t\t" << MyPrettyMassive[0][2][index] << "\t\t" << MyPrettyMassive[0][3][index] << std::endl;
 	}
 	out2.close();
 	std::cout << "\a" << std::endl;
 	int endClock = clock();
-	std::cout << "Time of calculation = " << (endClock - startClock)/CLOCKS_PER_SEC << std::endl;
+	std::cout << "Time of calculation = " << (endClock - startClock) / CLOCKS_PER_SEC << std::endl;
 	//std::cout << "\a" << std::endl;
 	system("pause");
-    return 0;
+	return 0;
 }
 
 void CreatingCrystall(double latticeParameter)
@@ -232,8 +230,7 @@ double SettingLatticeParameter(size_t size)
 {
 	double a0 = 2.845, h = a0 / 20;
 	latticeParameter = a0;
-	int central = static_cast <int> (pow(parameter, 3) / 2 + pow(parameter, 2) / 2 + parameter / 2);
-	std::cout << X[central] << "\t" << Y[central] << "\t" << Z[central] << std::endl;
+	int central = 2 * static_cast <int> (pow(parameter, 3) / 2 + pow(parameter, 2) / 2 + parameter / 2);
 	CreatingCrystall(latticeParameter);
 	double U0 = E(size, central);
 	int counter = 0;
@@ -258,7 +255,7 @@ double SettingLatticeParameter(size_t size)
 
 void CreatingVacancy(size_t size, std::vector<double> &vacancy)
 {
-	int central = 2*static_cast <int> (pow(parameter, 3) / 2 + pow(parameter, 2) / 2 + parameter / 2);
+	int central = 2 * static_cast <int> (pow(parameter, 3) / 2 + pow(parameter, 2) / 2 + parameter / 2);
 	std::cout << X[central] << "\t" << Y[central] << "\t" << Z[central] << std::endl;
 	vacancy[0] = X[central];
 	vacancy[1] = Y[central];
@@ -271,14 +268,18 @@ void CreatingVacancy(size_t size, std::vector<double> &vacancy)
 void MakingSphere(size_t &size, std::vector<double> &vacancy)
 {
 	double	*tempX = new double[size],
-			*tempY = new double[size],
-			*tempZ = new double[size];
+		*tempY = new double[size],
+		*tempZ = new double[size];
 	double Xcentral = vacancy[0], Ycentral = vacancy[1], Zcentral = vacancy[2];
+	double	R5 = latticeParameter * (parameter / 2 - 3.5),
+		R7 = latticeParameter * parameter / 2,
+		R231 = latticeParameter * ((parameter / 2 - 2) / 2 - 1),
+		R232 = latticeParameter * ((parameter / 2 - 2) / 2 + 1);
 	int counter = 0;
 	for (unsigned int i = 0; i < size; i++)
 	{
 		double R = sqrt(pow((Xcentral - X[i]), 2) + pow((Ycentral - Y[i]), 2) + pow((Zcentral - Z[i]), 2));
-		if (R <= latticeParameter * parameter / 2)
+		if (R < R7)
 		{
 			tempX[counter] = X[i];
 			tempY[counter] = Y[i];
@@ -308,7 +309,7 @@ void MakingSphere(size_t &size, std::vector<double> &vacancy)
 	for (int i = 0; i < counter; i++)
 	{
 		double R = sqrt(pow((Xcentral - X[i]), 2) + pow((Ycentral - Y[i]), 2) + pow((Zcentral - Z[i]), 2));
-		if (R <= latticeParameter * (parameter / 2 - 5))
+		if (R < R5)
 		{
 			tempX[newCounter] = X[i];
 			tempY[newCounter] = Y[i];
@@ -317,12 +318,12 @@ void MakingSphere(size_t &size, std::vector<double> &vacancy)
 		}
 	}
 	counterForRLessThan5 = newCounter;
-	
+
 	newCounter = 0;
 	for (int i = 0; i < counter; i++)
 	{
 		double R = sqrt(pow((Xcentral - X[i]), 2) + pow((Ycentral - Y[i]), 2) + pow((Zcentral - Z[i]), 2));
-		if (R > latticeParameter * (parameter / 2 - 5) && R <= latticeParameter * parameter / 2)
+		if (R > R5 && R < R7)
 		{
 			tempX[newCounter] = X[i];
 			tempY[newCounter] = Y[i];
@@ -336,78 +337,101 @@ void MakingSphere(size_t &size, std::vector<double> &vacancy)
 	for (int i = 0; i < counter; i++)
 	{
 		double R = sqrt(pow((Xcentral - X[i]), 2) + pow((Ycentral - Y[i]), 2) + pow((Zcentral - Z[i]), 2));
-		if (R >= latticeParameter * ((parameter / 2 - 5) / 2 - 1) && R <= latticeParameter * ((parameter / 2 - 5) / 2 + 1)) counterForRFrom2UpTo3++;
+		if (R > R231 && R < R232) counterForRFrom2UpTo3++;
 	}
 
 	counterForRLessThan7 = 0;
 	for (int i = 0; i < counter; i++)
 	{
 		double R = sqrt(pow((Xcentral - X[i]), 2) + pow((Ycentral - Y[i]), 2) + pow((Zcentral - Z[i]), 2));
-		if (R <= latticeParameter * parameter / 2) counterForRLessThan7++;
+		if (R < R7) counterForRLessThan7++;
 	}
 
 	for (int i = 0; i < 4; i++) MyPrettyMassive[0][i] = new double[counterForRLessThan5];
 	for (int i = 0; i < 4; i++) MyPrettyMassive[1][i] = new double[counterForRLessThan7];
 	for (int i = 0; i < 4; i++) MyPrettyMassive[2][i] = new double[counterForRFrom2UpTo3];
-	for (int i = 0; i < 4; i++) MyPrettyMassive[3][i] = new double[counterForRFrom5UpTo7];
 	for (int i = 0; i < 4; i++) BeforeRelax[i] = new double[counterForRFrom2UpTo3];
+	for (int i = 0; i < 4; i++) MyPrettyMassive[3][i] = new double[counterForRFrom5UpTo7];
 
-			int c1 = 0, c2 = 0, c3 = 0, c4 = 0, c5=0;
+	std::cout << counterForRLessThan5 << "\t" << counterForRLessThan7 << "\t" << counterForRFrom2UpTo3 << "\t" << counterForRFrom5UpTo7 << std::endl;
+
+	int c1 = 0, c2 = 0, c3 = 0, c4 = 0, c5 = 0;
 	int newCounter0 = 0, newCounter1 = 0, newCounter2 = 0, newCounter3 = 0;
-	for (int i = 0; i < counter; i++)
-	{
-		double R = sqrt(pow((Xcentral - X[i]), 2) + pow((Ycentral - Y[i]), 2) + pow((Zcentral - Z[i]), 2));
-		if (R <= latticeParameter * (parameter / 2 - 5))
-		{
-			MyPrettyMassive[0][0][newCounter0] = i;
-			MyPrettyMassive[0][1][newCounter0] = X[i];
-			MyPrettyMassive[0][2][newCounter0] = Y[i];
-			MyPrettyMassive[0][3][newCounter0] = Z[i];
-			newCounter0++;
-		}
-		if (R <= latticeParameter * parameter / 2)
-		{
-			MyPrettyMassive[1][0][newCounter1] = i;
-			MyPrettyMassive[1][1][newCounter1] = X[i];
-			MyPrettyMassive[1][2][newCounter1] = Y[i];
-			MyPrettyMassive[1][3][newCounter1] = Z[i];
-			newCounter1++;
-		}
-		if (R >= latticeParameter * ((parameter / 2 - 5) / 2 - 1) && R <= latticeParameter * ((parameter / 2 - 5) / 2 + 1))
-		{
-			MyPrettyMassive[2][0][newCounter2] = i;
-			MyPrettyMassive[2][1][newCounter2] = X[i];
-			MyPrettyMassive[2][2][newCounter2] = Y[i];
-			MyPrettyMassive[2][3][newCounter2] = Z[i];
 
-			/*double r = sqrt(pow((vacancy[0] - MyPrettyMassive[2][1][newCounter2]), 2) + pow((vacancy[1] - MyPrettyMassive[2][2][newCounter2]), 2) + pow((vacancy[2] - MyPrettyMassive[2][3][newCounter2]), 2));
-			if (r > 0 && r < 5) c1++;
-			else if (r > 5 && r < 6)
+	std::fstream outLess5("lat5.txt", std::fstream::out);
+	std::fstream outLess7("lat7.txt", std::fstream::out);
+	std::fstream outFrom2To3("lat23.txt", std::fstream::out);
+	std::fstream outFrom5To7("lat57.txt", std::fstream::out);
+	std::cout << counter << std::endl;
+	try
+	{
+		for (int i = 0; i < counter; i++)
+		{
+			double R = sqrt(pow((Xcentral - X[i]), 2) + pow((Ycentral - Y[i]), 2) + pow((Zcentral - Z[i]), 2));
+			if (R < R5)
 			{
+				MyPrettyMassive[0][0][newCounter0] = i;
+				MyPrettyMassive[0][1][newCounter0] = X[i];
+				MyPrettyMassive[0][2][newCounter0] = Y[i];
+				MyPrettyMassive[0][3][newCounter0] = Z[i];
+				outLess5 << X[i] << "\t" << Y[i] << "\t" << Z[i] << "\n";
+				newCounter0++;
+			}
+			if (R < R7)
+			{
+				MyPrettyMassive[1][0][newCounter1] = i;
+				MyPrettyMassive[1][1][newCounter1] = X[i];
+				MyPrettyMassive[1][2][newCounter1] = Y[i];
+				MyPrettyMassive[1][3][newCounter1] = Z[i];
+				outLess7 << X[i] << "\t" << Y[i] << "\t" << Z[i] << "\n";
+				newCounter1++;
+			}
+			if (R > R231 && R < R232)
+			{
+				MyPrettyMassive[2][0][newCounter2] = i;
+				MyPrettyMassive[2][1][newCounter2] = X[i];
+				MyPrettyMassive[2][2][newCounter2] = Y[i];
+				MyPrettyMassive[2][3][newCounter2] = Z[i];
+				outFrom2To3 << X[i] << "\t" << Y[i] << "\t" << Z[i] << "\n";
+
+				/*double r = sqrt(pow((vacancy[0] - MyPrettyMassive[2][1][newCounter2]), 2) + pow((vacancy[1] - MyPrettyMassive[2][2][newCounter2]), 2) + pow((vacancy[2] - MyPrettyMassive[2][3][newCounter2]), 2));
+				if (r > 0 && r < 5) c1++;
+				else if (r > 5 && r < 6)
+				{
 				c2++;
 				std::cout << vacancy[0] - MyPrettyMassive[2][1][newCounter2] << "\t" << vacancy[1] - MyPrettyMassive[2][2][newCounter2] << "\t" << vacancy[2] - MyPrettyMassive[2][3][newCounter2] << std::endl;
-			}
-			else if (r > 6 && r < 7) c3++;
-			else if (r > 7 && r < 8) c4++;
-			else if (r > 8 && r < 9) c5++;
-			std::cout << r << "\t" << c1 << "\t" << c2 << "\t" << c3 << "\t" << c4 << "\t" << c5 << std::endl;*/
+				}
+				else if (r > 6 && r < 7) c3++;
+				else if (r > 7 && r < 8) c4++;
+				else if (r > 8 && r < 9) c5++;
+				std::cout << r << "\t" << c1 << "\t" << c2 << "\t" << c3 << "\t" << c4 << "\t" << c5 << std::endl;*/
 
-			BeforeRelax[0][newCounter2] = i;
-			BeforeRelax[1][newCounter2] = X[i];
-			BeforeRelax[2][newCounter2] = Y[i];
-			BeforeRelax[3][newCounter2] = Z[i];
-			newCounter2++;
-		}
-		if (R > latticeParameter * ((parameter / 2) - 5) && R <= latticeParameter * parameter / 2)
-		{
-			MyPrettyMassive[3][0][newCounter3] = i;
-			MyPrettyMassive[3][1][newCounter3] = X[i];
-			MyPrettyMassive[3][2][newCounter3] = Y[i];
-			MyPrettyMassive[3][3][newCounter3] = Z[i];
-			newCounter3++;
+				BeforeRelax[0][newCounter2] = i;
+				BeforeRelax[1][newCounter2] = X[i];
+				BeforeRelax[2][newCounter2] = Y[i];
+				BeforeRelax[3][newCounter2] = Z[i];
+				newCounter2++;
+			}
+			if (R > R5 && R < R7)
+			{
+				MyPrettyMassive[3][0][newCounter3] = i;
+				MyPrettyMassive[3][1][newCounter3] = X[i];
+				MyPrettyMassive[3][2][newCounter3] = Y[i];
+				MyPrettyMassive[3][3][newCounter3] = Z[i];
+				outFrom5To7 << X[i] << "\t" << Y[i] << "\t" << Z[i] << "\n";
+				newCounter3++;
+			}
 		}
 	}
+	catch (std::range_error &ba)
+	{
+		std::cout << "bad_allock catched: " << ba.what() << std::endl;
+	}
 	std::cout << newCounter0 << "\t" << newCounter1 << "\t" << newCounter2 << "\t" << newCounter3 << std::endl;
+	outLess5.close();
+	outLess7.close();
+	outFrom2To3.close();
+	outFrom5To7.close();
 	//NearestTo = new double*[counterForRLessThan5];
 	//for (int i = 0; i < counterForRLessThan5; i++)
 	//{
@@ -446,12 +470,11 @@ void MakingSphere(size_t &size, std::vector<double> &vacancy)
 		Y[i] = tempY[i];
 		Z[i] = tempZ[i];
 	}
-	size = counter;
 }
 
 void Relaxation()
 {
-	std::cout << "C from relax = " << C << std::endl;
+	//std::cout << "C from relax = " << C << std::endl;
 	double *tempX = new double[counterForRFrom2UpTo3], *tempY = new double[counterForRFrom2UpTo3], *tempZ = new double[counterForRFrom2UpTo3];
 	for (int i = 0; i < counterForRFrom2UpTo3; i++)
 	{
@@ -463,12 +486,11 @@ void Relaxation()
 	for (int j = 0; j < 10; j++)
 	{
 		std::cout << j << std::endl;
-		//std::cout << MyPrettyMassive[0][1][20] << "\t" << MyPrettyMassive[0][2][20] << "\t" << MyPrettyMassive[0][3][20] << std::endl;
 		for (int i = 0; i < counterForRLessThan5; i++)
 		{
 			double h = latticeParameter / 100;
 			int counter = 1;
-			while (counter < 10)
+			while (counter < 5)
 			{
 				double Estart = E(counterForRLessThan5, i, MyPrettyMassive[0]);
 				//std::cout << "Estart = " << Estart << std::endl;
@@ -484,9 +506,14 @@ void Relaxation()
 				double Ez = E(counterForRLessThan5, i, MyPrettyMassive[0]);
 				double dEz = Ez - Estart;
 				MyPrettyMassive[0][3][i] -= h;
-				double b = sqrt(pow(dEx, 2) + pow(dEy, 2) + pow(dEz, 2));
+				double b = sqrt(pow(dEx, 2) + pow(dEy, 2) + pow(dEz, 2)) + 1E-10;
 				if (b == 0) break;
 				double hx = -h*dEx / b, hy = -h*dEy / b, hz = -h*dEz / b;
+				/*std::cout << "--------------------" << std::endl;
+				std::cout << "Estart = " << Estart << " Ex = " << Ex << " Ey = " << Ey << " Ez = " << Ez << std::endl;
+				std::cout << "b = " << b << std::endl;
+				std::cout << "hx = " << hx << " hy = " << hy << " hz = " << hz << std::endl;*/
+				//std::cout << "counter = " << counter << std::endl;
 				MyPrettyMassive[0][1][i] += hx;
 				MyPrettyMassive[0][2][i] += hy;
 				MyPrettyMassive[0][3][i] += hz;
@@ -504,10 +531,10 @@ void Relaxation()
 	}
 	CopyData(MyPrettyMassive[2], counterForRFrom2UpTo3, MyPrettyMassive[0], counterForRLessThan5);
 	CopyData(MyPrettyMassive[1], counterForRLessThan7, MyPrettyMassive[0], counterForRLessThan5);
-	CopyData(MyPrettyMassive[3], counterForRFrom5UpTo7, MyPrettyMassive[1], counterForRLessThan7);
+
 	/*for (int i = 0; i < counterForRFrom2UpTo3; i++)
 	{
-		std::cout << "i = " << MyPrettyMassive[2][0][i] << " dX = " << MyPrettyMassive[2][1][i] - tempX[i] << " dY = " << MyPrettyMassive[2][2][i] - tempY[i] << " dZ = " << MyPrettyMassive[2][3][i] - tempZ[i] << std::endl;
+	std::cout << "i = " << MyPrettyMassive[2][0][i] << " dX = " << MyPrettyMassive[2][1][i] - tempX[i] << " dY = " << MyPrettyMassive[2][2][i] - tempY[i] << " dZ = " << MyPrettyMassive[2][3][i] - tempZ[i] << std::endl;
 	}*/
 }
 
@@ -516,84 +543,84 @@ void Relaxation(int a, double dx)
 	/*double *tempX = new double[counterForRFrom2UpTo3], *tempY = new double[counterForRFrom2UpTo3], *tempZ = new double[counterForRFrom2UpTo3];
 	for (int i = 0; i < counterForRFrom2UpTo3; i++)
 	{
-		tempX[i] = MyPrettyMassive[2][1][i];
-		tempY[i] = MyPrettyMassive[2][2][i];
-		tempZ[i] = MyPrettyMassive[2][3][i];
+	tempX[i] = MyPrettyMassive[2][1][i];
+	tempY[i] = MyPrettyMassive[2][2][i];
+	tempZ[i] = MyPrettyMassive[2][3][i];
 	}*/
 
 	MyPrettyMassive[0][1][a] += dx;
 	/*for (int j = 0; j < 10; j++)
 	{*/
-		double h = latticeParameter / 100;
-		int counter = 1;
-		while (counter < 15)
+	double h = latticeParameter / 100;
+	int counter = 1;
+	while (counter < 10)
+	{
+		//std::cout << "hi" << std::endl;
+		double Estart = E(counterForRLessThan5, a, MyPrettyMassive[0]);
+		MyPrettyMassive[0][2][a] += h;
+		double Ey = E(counterForRLessThan5, a, MyPrettyMassive[0]);
+		double dEy = Ey - Estart;
+		MyPrettyMassive[0][2][a] -= h;
+		MyPrettyMassive[0][3][a] += h;
+		double Ez = E(counterForRLessThan5, a, MyPrettyMassive[0]);
+		double dEz = Ez - Estart;
+		MyPrettyMassive[0][3][a] -= h;
+		double b = sqrt(pow(dEy, 2) + pow(dEz, 2)) + 1E-10;
+		//std::cout << "Estart = " << Estart << " Ey = " << Ey << " Ez = " << Ez << std::endl;
+		//std::cout << "b = " << b << std::endl;
+		if (b == 0) break;
+		double hy = -h*dEy / b, hz = -h*dEz / b;
+		MyPrettyMassive[0][2][a] += hy;
+		MyPrettyMassive[0][3][a] += hz;
+		double dE = E(counterForRLessThan5, a, MyPrettyMassive[0]);
+		if (dE >= Estart)
 		{
-			//std::cout << "hi" << std::endl;
-			double Estart = E(counterForRLessThan5, a, MyPrettyMassive[0]);
-			MyPrettyMassive[0][2][a] += h;
-			double Ey = E(counterForRLessThan5, a, MyPrettyMassive[0]);
-			double dEy = Ey - Estart;
-			MyPrettyMassive[0][2][a] -= h;
-			MyPrettyMassive[0][3][a] += h;
-			double Ez = E(counterForRLessThan5, a, MyPrettyMassive[0]);
-			double dEz = Ez - Estart;
-			MyPrettyMassive[0][3][a] -= h;
-			double b = sqrt(pow(dEy, 2) + pow(dEz, 2));
-			//std::cout << "Estart = " << Estart << " Ey = " << Ey << " Ez = " << Ez << std::endl;
-			//std::cout << "b = " << b << std::endl;
-			if (b == 0) break;
-			double hy = -h*dEy / b, hz = -h*dEz / b;
-			MyPrettyMassive[0][2][a] += hy;
-			MyPrettyMassive[0][3][a] += hz;
-			double dE = E(counterForRLessThan5, a, MyPrettyMassive[0]);
-			if (dE >= Estart)
-			{
-				h /= (counter * 8);
-				MyPrettyMassive[0][2][a] -= hy;
-				MyPrettyMassive[0][3][a] -= hz;
-				counter++;
-			}
-			//std::cout << "hy = " << hy << " hz = " << hz << std::endl;
+			h /= (counter * 8);
+			MyPrettyMassive[0][2][a] -= hy;
+			MyPrettyMassive[0][3][a] -= hz;
+			counter++;
 		}
-		for (int i = 0; i < counterForRLessThan5; i++)
+		//std::cout << "hy = " << hy << " hz = " << hz << std::endl;
+	}
+	for (int i = 0; i < counterForRLessThan5; i++)
+	{
+		if (i != a)
 		{
-			if (i != a)
+			h = latticeParameter / 100;
+			counter = 1;
+			while (counter < 10)
 			{
-				h = latticeParameter / 100;
-				counter = 1;
-				while (counter < 15)
+				double Estart = E(counterForRLessThan5, i, MyPrettyMassive[0]);
+				MyPrettyMassive[0][1][i] += h;
+				double Ex = E(counterForRLessThan5, i, MyPrettyMassive[0]);
+				double dEx = Ex - Estart;
+				MyPrettyMassive[0][1][i] -= h;
+				MyPrettyMassive[0][2][i] += h;
+				double Ey = E(counterForRLessThan5, i, MyPrettyMassive[0]);
+				double dEy = Ey - Estart;
+				MyPrettyMassive[0][2][i] -= h;
+				MyPrettyMassive[0][3][i] += h;
+				double Ez = E(counterForRLessThan5, i, MyPrettyMassive[0]);
+				double dEz = Ez - Estart;
+				MyPrettyMassive[0][3][i] -= h;
+				double b = sqrt(pow(dEx, 2) + pow(dEy, 2) + pow(dEz, 2)) + 1E-10;
+				if (b == 0) break;
+				double hx = -h*dEx / b, hy = -h*dEy / b, hz = -h*dEz / b;
+				MyPrettyMassive[0][1][i] += hx;
+				MyPrettyMassive[0][2][i] += hy;
+				MyPrettyMassive[0][3][i] += hz;
+				double dE = E(counterForRLessThan5, i, MyPrettyMassive[0]);
+				if (dE >= Estart)
 				{
-					double Estart = E(counterForRLessThan5, i, MyPrettyMassive[0]);
-					MyPrettyMassive[0][1][i] += h;
-					double Ex = E(counterForRLessThan5, i, MyPrettyMassive[0]);
-					double dEx = Ex - Estart;
-					MyPrettyMassive[0][1][i] -= h;
-					MyPrettyMassive[0][2][i] += h;
-					double Ey = E(counterForRLessThan5, i, MyPrettyMassive[0]);
-					double dEy = Ey - Estart;
-					MyPrettyMassive[0][2][i] -= h;
-					MyPrettyMassive[0][3][i] += h;
-					double Ez = E(counterForRLessThan5, i, MyPrettyMassive[0]);
-					double dEz = Ez - Estart;
-					MyPrettyMassive[0][3][i] -= h;
-					double b = sqrt(pow(dEx, 2) + pow(dEy, 2) + pow(dEz, 2));
-					if (b == 0) break;
-					double hx = -h*dEx / b, hy = -h*dEy / b, hz = -h*dEz / b;
-					MyPrettyMassive[0][1][i] += hx;
-					MyPrettyMassive[0][2][i] += hy;
-					MyPrettyMassive[0][3][i] += hz;
-					double dE = E(counterForRLessThan5, i, MyPrettyMassive[0]);
-					if (dE >= Estart)
-					{
-						h /= (counter * 8);
-						MyPrettyMassive[0][1][i] -= hx;
-						MyPrettyMassive[0][2][i] -= hy;
-						MyPrettyMassive[0][3][i] -= hz;
-						counter++;
-					}
+					h /= (counter * 8);
+					MyPrettyMassive[0][1][i] -= hx;
+					MyPrettyMassive[0][2][i] -= hy;
+					MyPrettyMassive[0][3][i] -= hz;
+					counter++;
 				}
 			}
 		}
+	}
 	//}
 	CopyData(MyPrettyMassive[2], counterForRFrom2UpTo3, MyPrettyMassive[0], counterForRLessThan5);
 	CopyData(MyPrettyMassive[1], counterForRLessThan7, MyPrettyMassive[0], counterForRLessThan5);
@@ -602,27 +629,28 @@ void Relaxation(int a, double dx)
 
 double ParameterC()
 {
-	std::cout << "I`m parameter" << std::endl;
-	std::cout << "C = " << C << std::endl;
 	double Cx = 0, Cy = 0, Cz = 0, C1 = 0;
 	int counter = 3;
 	for (int i = 0; i < counterForRFrom2UpTo3; i++)
 	{
 		double R = sqrt(pow((MyPrettyMassive[2][1][i] - BeforeRelax[1][i]), 2) + pow((MyPrettyMassive[2][2][i] - BeforeRelax[2][i]), 2) + pow((MyPrettyMassive[2][3][i] - BeforeRelax[3][i]), 2));
-		if (int(MyPrettyMassive[2][1][i]) != 0) Cx = (MyPrettyMassive[2][1][i] - BeforeRelax[1][i])*pow(R, 3) / MyPrettyMassive[2][1][i];
+		if (int(MyPrettyMassive[2][1][i] - vacancy[0]) != 0) Cx = (MyPrettyMassive[2][1][i] - BeforeRelax[1][i])*pow(R, 3) / MyPrettyMassive[2][1][i];
 		else counter--;
-		if (int(MyPrettyMassive[2][2][i]) != 0) Cy = (MyPrettyMassive[2][2][i] - BeforeRelax[2][i])*pow(R, 3) / MyPrettyMassive[2][2][i];
+		if (int(MyPrettyMassive[2][2][i] - vacancy[1]) != 0) Cy = (MyPrettyMassive[2][2][i] - BeforeRelax[2][i])*pow(R, 3) / MyPrettyMassive[2][2][i];
 		else counter--;
-		if (int(MyPrettyMassive[2][3][i]) != 0) Cz = (MyPrettyMassive[2][3][i] - BeforeRelax[3][i])*pow(R, 3) / MyPrettyMassive[2][3][i];
+		if (int(MyPrettyMassive[2][3][i] - vacancy[2]) != 0) Cz = (MyPrettyMassive[2][3][i] - BeforeRelax[3][i])*pow(R, 3) / MyPrettyMassive[2][3][i];
 		else counter--;
 		C1 += Cx + Cy + Cz;
 		//std::cout << "C1 = " << C1 << std::endl;
 	}
+	if (counter == 0) std::cout << "ERRORRRRRR" << std::endl;
 	C1 /= (counterForRFrom2UpTo3*counter);
 	//std::cout << "C1 = " << C1 << std::endl;
-	CopyData(MyPrettyMassive[0], counterForRLessThan5, MyPrettyMassive[2], counterForRFrom2UpTo3);
+
+	/*CopyData(MyPrettyMassive[0], counterForRLessThan5, MyPrettyMassive[2], counterForRFrom2UpTo3);
 	CopyData(MyPrettyMassive[1], counterForRLessThan7, MyPrettyMassive[0], counterForRLessThan5);
-	CopyData(MyPrettyMassive[3], counterForRFrom5UpTo7, MyPrettyMassive[1], counterForRLessThan7);
+	CopyData(MyPrettyMassive[3], counterForRFrom5UpTo7, MyPrettyMassive[1], counterForRLessThan7);*/
+
 	return C1;
 }
 
@@ -647,20 +675,29 @@ void CopyData(double **MassiveTo, int sizeTo, double **MassiveFrom, int sizeFrom
 
 void RelaxationOuterSphere(const std::vector<double> &vacancy)
 {
-	std::cout << "I`m outer sphere" << std::endl;
-	std::cout << "C from outer shphere = " << C << std::endl;
 	double R, dX, dY, dZ;
 	for (int i = 0; i < counterForRFrom5UpTo7; i++)
 	{
-		R = sqrt(pow((MyPrettyMassive[1][1][i] - vacancy[0]), 2) + pow((MyPrettyMassive[1][2][i] - vacancy[1]), 2) + pow((MyPrettyMassive[1][3][i] - vacancy[2]), 2));
-		dX = C*MyPrettyMassive[1][1][i] / (pow(R, 3));
-		dY = C*MyPrettyMassive[1][2][i] / (pow(R, 3));
-		dZ = C*MyPrettyMassive[1][3][i] / (pow(R, 3));
+		R = sqrt(pow((MyPrettyMassive[3][1][i] - vacancy[0]), 2) + pow((MyPrettyMassive[3][2][i] - vacancy[1]), 2) + pow((MyPrettyMassive[3][3][i] - vacancy[2]), 2));
+		dX = C*MyPrettyMassive[3][1][i] / (pow(R, 3));
+		dY = C*MyPrettyMassive[3][2][i] / (pow(R, 3));
+		dZ = C*MyPrettyMassive[3][3][i] / (pow(R, 3));
 		//std::cout << "dX = " << dX << " dY = " << dY << " dZ = " << dZ << std::endl;
-		MyPrettyMassive[1][1][i] += dX;
-		MyPrettyMassive[1][2][i] += dY;
-		MyPrettyMassive[1][3][i] += dZ;
+		MyPrettyMassive[3][1][i] += dX;
+		MyPrettyMassive[3][2][i] += dY;
+		MyPrettyMassive[3][3][i] += dZ;
 	}
+	CopyData(MyPrettyMassive[1], counterForRLessThan7, MyPrettyMassive[3], counterForRFrom5UpTo7);
+}
+
+void Copy()
+{
+	CopyData(MyPrettyMassive[0], counterForRLessThan5, MyPrettyMassive[1], counterForRLessThan7);
+	CopyData(MyPrettyMassive[0], counterForRLessThan5, MyPrettyMassive[2], counterForRFrom2UpTo3);
+	CopyData(MyPrettyMassive[0], counterForRLessThan5, MyPrettyMassive[3], counterForRFrom5UpTo7);
+	CopyData(MyPrettyMassive[1], counterForRLessThan7, MyPrettyMassive[2], counterForRFrom2UpTo3);
+	CopyData(MyPrettyMassive[1], counterForRLessThan7, MyPrettyMassive[3], counterForRFrom5UpTo7);
+	CopyData(MyPrettyMassive[2], counterForRFrom2UpTo3, MyPrettyMassive[3], counterForRFrom5UpTo7);
 }
 
 double F(double r)
@@ -729,4 +766,3 @@ double Energy(size_t size)
 	U /= 2;
 	return U;
 }
-
